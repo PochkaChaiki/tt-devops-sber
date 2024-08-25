@@ -8,11 +8,16 @@ helm repo add jenkins https://charts.jenkins.io
 helm repo update
 ```
 
-2. Configure serviceAccount field in jenkins:
+
+2. Get values to deploy Jenkins:
+
+Use ready **jenkins-values.yaml** from this repository
+
+<!-- Run this command:
 ```
 wget https://raw.githubusercontent.com/jenkinsci/helm-charts/main/charts/jenkins/values.yaml
 ```
-Add next lines to values.yaml:
+Add this lines to values.yaml:
 ```
 serviceType: NodePort
 nodePort: 32000
@@ -22,23 +27,20 @@ serviceAccount:
   create: false
 name: jenkins
 annotations: {}
+``` 
+Rename values.yaml to jenkins-values.yaml -->
+
+3. Install Jenkins helm chart and deploy jenkins:
+```
+helm install jenkins jenkins/jenkins --create-namespace -n jenkins -f jenkins-values.yaml
 ```
 
-Or Use 
+<!-- helm upgrade --install jenkins jenkins/jenkins --create-namespace -n jenkins --set controller.image.repository="pochkachaiki/jenkins-k8s-helm" --set controller.image.tag="latest" --set controller.image.tagLabel="" -f values.yaml -->
 
-3. Install jenkins helm chart and deploy jenkins:
+4. Configure service account for Jenkins:
+Use ready yaml file:
 ```
-helm upgrade --install jenkins jenkins/jenkins --create-namespace -n jenkins --set controller.image.repository="pochkachaiki/jenkins-k8s-helm" --set controller.image.tag="latest" --set controller.image.tagLabel="" -f values.yaml
-```
-
-<!-- helm install jenkins jenkins/jenkins --create-namespace -n jenkins -f values.yaml  -->
-
-
-4. Configure permissions:
-```
-wget https://raw.githubusercontent.com/jenkins-infra/jenkins.io/master/content/doc/tutorials/kubernetes/installing-jenkins-on-kubernetes/jenkins-sa.yaml
-
-kubectl apply -f jenkins-sa.yaml
+kubectl apply -f jenkins-sa.yaml"
 ```
 
 5. Get admin password and get the Jenkins URL:
@@ -48,10 +50,11 @@ kubectl apply -f jenkins-sa.yaml
 kubectl exec -n jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo 
 ```
 
-Run this to port forward to enter jenkins admin ui
+Run this to forward a port to enter jenkins admin ui
 ```
 kubectl --namespace jenkins port-forward svc/jenkins 8080:8080
 ```
+
 6. Set kubernetes service account credentials
 To run pipeline that deploys nginx in same cluster you should provide jenkins with your Kubernetes Service Account credentials.
 Go to "Manage Jenkins" -> "Credentials" -> Click on "(global)" domain -> Click "Add credentials" in top right corner
@@ -65,11 +68,64 @@ Go to "Manage Jenkins" -> "Plugins" -> Click "Available plugins" and write "Kube
 1. Create pipeline
 Go to Dashboard. Click on "Create a job" or "New Item".
 Name it "nginx-job" or whatever you like. Choose "Pipeline" as an item type and click "Ok".
-2. 
 
-6. Run this commands to copy kube config file to jenkins pod so that jenkins could deploy nginx chart on present minikube cluster
+2. Define script
+Come to the bottom of the page and in textfield "Script" put down this script:
 ```
-kubectl exec -n jenkins -it svc/jenkins -- mkdir -p /var/jenkins_home/.kube
-kubectp cp -n jenkins *<kube config file path>* *<jenkins pod name>*:/var/jenkins_home/.kube
+pipeline {
+    agent {
+        kubernetes{
+            yaml '''
+            apiVersion: "v1"
+            kind: "Pod"
+            metadata:
+                name: "jenkins-inbound-agent"
+                namespace: "jenkins"
+            spec:
+                serviceAccountName: "jenkins"
+                containers:
+                  - name: "jnlp"
+                    image: "pochkachaiki/inbound-agent-helm:latest"
+                
+            '''
+        }
+    }
+    environment {
+        KUBECONFIG = 'f2c5bce3-a853-4e69-a7f6-952dc2b09144'
+    }
+    stages{
+        stage('Get nginx chart'){
+            steps{
+                sh 'git config --list'
+                git branch: 'main', url: 'https://github.com/PochkaChaiki/tt-devops-sber.git'
+            }
+        }
+        stage('Deploy nginx'){
+            steps{
+                withKubeConfig([credentialsId: env.KUBECONFIG]){
+                    sh '''
+                        helm upgrade --install nginx ./nginx-chart
+                    '''
+                }
+            }
+        }
+    }
+}
 ```
+
+3. Save it and run pipeline
+Save this pipeline by clicking on "Save".
+In nginx-job menu click on "Build Now".
+After some time the pod nginx-nginx-chart will be deployed.
+
+## Check Nginx
+1. Forward nginx port to 80
+Run this command:
+```
+kubectl -n jenkins port-forward svc/nginx-nginx-chart 80:80
+```
+
+2. Check Nginx
+Go to localhost:80 and ensure nginx is running.
+
 
