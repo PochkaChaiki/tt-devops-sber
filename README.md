@@ -24,11 +24,15 @@ name: jenkins
 annotations: {}
 ```
 
+Or Use 
+
 3. Install jenkins helm chart and deploy jenkins:
 ```
 helm upgrade --install jenkins jenkins/jenkins --create-namespace -n jenkins --set controller.image.repository="pochkachaiki/jenkins-k8s-helm" --set controller.image.tag="latest" --set controller.image.tagLabel="" -f values.yaml
-helm install jenkins jenkins/jenkins --create-namespace -n jenkins -f values.yaml 
 ```
+
+<!-- helm install jenkins jenkins/jenkins --create-namespace -n jenkins -f values.yaml  -->
+
 
 4. Configure permissions:
 ```
@@ -57,11 +61,11 @@ Save credentials ID and move on.
 7. Add Kubernetes CLI plugin
 Go to "Manage Jenkins" -> "Plugins" -> Click "Available plugins" and write "Kubernetes CLI" to search field -> Install plugin.
 
-
-8. Create pipeline
+## Deploy Nginx.
+1. Create pipeline
 Go to Dashboard. Click on "Create a job" or "New Item".
 Name it "nginx-job" or whatever you like. Choose "Pipeline" as an item type and click "Ok".
-
+2. 
 
 6. Run this commands to copy kube config file to jenkins pod so that jenkins could deploy nginx chart on present minikube cluster
 ```
@@ -69,8 +73,3 @@ kubectl exec -n jenkins -it svc/jenkins -- mkdir -p /var/jenkins_home/.kube
 kubectp cp -n jenkins *<kube config file path>* *<jenkins pod name>*:/var/jenkins_home/.kube
 ```
 
-
-EkQY6fZtTX5wiUHytBb190
-
-
-83cce988-6d65-48d2-8ceb-e165acca127e
