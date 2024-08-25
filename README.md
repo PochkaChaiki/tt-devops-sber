@@ -1,6 +1,6 @@
 # Nginx deployment via Jenkins in minikube
 
-## Prerequesits:
+## Prerequisites:
 Installed minikube, kubectl and helm on your machine
 
 
