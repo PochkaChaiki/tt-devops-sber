@@ -91,7 +91,7 @@ pipeline {
         }
     }
     environment {
-        KUBECONFIG = 'f2c5bce3-a853-4e69-a7f6-952dc2b09144'
+        KUBECONFIG = <YOUR KUBERNETES CREDENTIALS>
     }
     stages{
         stage('Get nginx chart'){
