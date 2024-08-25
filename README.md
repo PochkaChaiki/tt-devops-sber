@@ -2,14 +2,14 @@
 
 
 ## Install jenkins.
-1. Install Jenkins repo:
+### 1. Install Jenkins repo:
 ```
 helm repo add jenkins https://charts.jenkins.io
 helm repo update
 ```
 
 
-2. Get values to deploy Jenkins:
+### 2. Get values to deploy Jenkins:
 
 Use ready **jenkins-values.yaml** from this repository
 
@@ -30,20 +30,20 @@ annotations: {}
 ``` 
 Rename values.yaml to jenkins-values.yaml -->
 
-3. Install Jenkins helm chart and deploy jenkins:
+### 3. Install Jenkins helm chart and deploy jenkins:
 ```
 helm install jenkins jenkins/jenkins --create-namespace -n jenkins -f jenkins-values.yaml
 ```
 
 <!-- helm upgrade --install jenkins jenkins/jenkins --create-namespace -n jenkins --set controller.image.repository="pochkachaiki/jenkins-k8s-helm" --set controller.image.tag="latest" --set controller.image.tagLabel="" -f values.yaml -->
 
-4. Configure service account for Jenkins:
+### 4. Configure service account for Jenkins:
 Use ready yaml file:
 ```
 kubectl apply -f jenkins-sa.yaml"
 ```
 
-5. Get admin password and get the Jenkins URL:
+### 5. Get admin password and get the Jenkins URL:
 ```
 # Wait some time before running this commands because containers mignt not be created by your current moment
 # you can remove "&& echo" if using windows:
@@ -55,21 +55,23 @@ Run this to forward a port to enter jenkins admin ui
 kubectl --namespace jenkins port-forward svc/jenkins 8080:8080
 ```
 
-6. Set kubernetes service account credentials
+### 6. Set kubernetes service account credentials
 To run pipeline that deploys nginx in same cluster you should provide jenkins with your Kubernetes Service Account credentials.
-Go to "Manage Jenkins" -> "Credentials" -> Click on "(global)" domain -> Click "Add credentials" in top right corner
+
+Go to "Manage Jenkins" -> "Credentials" -> Click on "(global)" domain -> Click "Add credentials" in top right corner.
+
 In field "Kind" choose "Kubernetes Service Account" and scope keep Global. Click on "Create".
 Save credentials ID and move on.
 
-7. Add Kubernetes CLI plugin
+### 7. Add Kubernetes CLI plugin
 Go to "Manage Jenkins" -> "Plugins" -> Click "Available plugins" and write "Kubernetes CLI" to search field -> Install plugin.
 
 ## Deploy Nginx.
-1. Create pipeline
+### 1. Create pipeline
 Go to Dashboard. Click on "Create a job" or "New Item".
 Name it "nginx-job" or whatever you like. Choose "Pipeline" as an item type and click "Ok".
 
-2. Define script
+### 2. Define script
 Come to the bottom of the page and in textfield "Script" put down this script:
 ```
 pipeline {
@@ -113,19 +115,19 @@ pipeline {
 }
 ```
 
-3. Save it and run pipeline
+### 3. Save it and run pipeline
 Save this pipeline by clicking on "Save".
 In nginx-job menu click on "Build Now".
 After some time the pod nginx-nginx-chart will be deployed.
 
 ## Check Nginx
-1. Forward nginx port to 80
+### 1. Forward nginx port to 80
 Run this command:
 ```
 kubectl -n jenkins port-forward svc/nginx-nginx-chart 80:80
 ```
 
-2. Check Nginx
+### 2. Check Nginx
 Go to localhost:80 and ensure nginx is running.
 
 
